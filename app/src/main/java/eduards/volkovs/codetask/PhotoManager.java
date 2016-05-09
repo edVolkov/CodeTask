@@ -1,6 +1,8 @@
 package eduards.volkovs.codetask;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.ImageView;
@@ -12,6 +14,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -51,7 +54,8 @@ public class PhotoManager {
         @Override
         protected void onPostExecute(String url) {
             super.onPostExecute(url);
-            Log.i("PhotoManager",url);
+            PhotoDownloadTask photoDownloadTask = new PhotoDownloadTask(imageView);
+            photoDownloadTask.execute(url, id);
         }
 
         public String getPhotoUrl(String result) {
@@ -66,6 +70,52 @@ public class PhotoManager {
                 e.printStackTrace();
             }
             return photoUrl;
+        }
+    }
+
+    public class PhotoDownloadTask extends AsyncTask<String,Void,Bitmap> {
+
+        private WeakReference<ImageView> imageViewReference;
+
+        public PhotoDownloadTask(ImageView imageView) {
+            this.imageViewReference = new WeakReference<ImageView>(imageView);
+        }
+        @Override
+        protected Bitmap doInBackground(String... params) {
+            Bitmap bitmap = getBitmap(params[0]);
+            return bitmap;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            displayPhoto(bitmap);
+        }
+
+        private Bitmap getBitmap(String url) {
+            try {
+                Bitmap bitmap = null;
+                URL imageUrl = new URL(url);
+                HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
+                InputStream is = conn.getInputStream();
+
+                bitmap = BitmapFactory.decodeStream(is);
+
+                conn.disconnect();
+
+                return bitmap;
+
+            } catch(Throwable e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        public void displayPhoto(Bitmap bitmap) {
+            if (imageViewReference != null) {
+                ImageView imageView = imageViewReference.get();
+                imageView.setImageBitmap(bitmap);
+            }
         }
     }
 }
