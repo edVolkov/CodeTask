@@ -14,10 +14,12 @@ import java.util.ArrayList;
 public class LazyAdapter extends BaseAdapter {
     private LayoutInflater inflater;
     private ArrayList<String> photoIds;
+    private PhotoManager photoManager;
 
     public LazyAdapter(Context context, ArrayList<String> photoIds) {
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.photoIds = photoIds;
+        photoManager = new PhotoManager();
     }
     @Override
     public int getCount() {
@@ -46,7 +48,7 @@ public class LazyAdapter extends BaseAdapter {
             viewHolder = (ViewHolder) view.getTag();
         }
 
-        viewHolder.getPhoto().setImageResource(R.drawable.ic_sort);
+        photoManager.displayPhoto(photoIds.get(position),viewHolder.getPhoto());
 
         return view;
     }
