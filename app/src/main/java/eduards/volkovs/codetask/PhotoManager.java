@@ -2,6 +2,8 @@ package eduards.volkovs.codetask;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -54,8 +56,12 @@ public class PhotoManager {
         @Override
         protected void onPostExecute(String url) {
             super.onPostExecute(url);
-            PhotoDownloadTask photoDownloadTask = new PhotoDownloadTask(imageView);
-            photoDownloadTask.execute(url, id);
+            if(cancelPotentialDownload(id,imageView)){
+                PhotoDownloadTask photoDownloadTask = new PhotoDownloadTask(imageView, id);
+                DrawableWithTaskReference downloadedDrawable = new DrawableWithTaskReference(photoDownloadTask);
+                imageView.setImageDrawable(downloadedDrawable);
+                photoDownloadTask.execute(url, id);
+            }
         }
 
         public String getPhotoUrl(String result) {
@@ -76,9 +82,10 @@ public class PhotoManager {
     public class PhotoDownloadTask extends AsyncTask<String,Void,Bitmap> {
 
         private WeakReference<ImageView> imageViewReference;
-
-        public PhotoDownloadTask(ImageView imageView) {
+        private String photoId;
+        public PhotoDownloadTask(ImageView imageView, String photoId) {
             this.imageViewReference = new WeakReference<ImageView>(imageView);
+            this.photoId = photoId;
         }
         @Override
         protected Bitmap doInBackground(String... params) {
@@ -114,8 +121,62 @@ public class PhotoManager {
         public void displayPhoto(Bitmap bitmap) {
             if (imageViewReference != null) {
                 ImageView imageView = imageViewReference.get();
-                imageView.setImageBitmap(bitmap);
+
+                // Get PhotoDownloadTask reference associated with this ImageView
+                PhotoDownloadTask photoDownloadTask = getPhotoDownloadTask(imageView);
+
+                // Set a new bitmap only if this task is still associated with it
+                if (this == photoDownloadTask) {
+                    imageView.setImageBitmap(bitmap);
+                }
             }
         }
+
+        public String getPhotoId() {
+            return photoId;
+        }
+    }
+
+    // A drawable which has a reference to a PhotoDownloadTask
+    public class DrawableWithTaskReference extends ColorDrawable {
+        private final WeakReference<PhotoDownloadTask> photoDownloadTaskReference;
+
+        public DrawableWithTaskReference(PhotoDownloadTask photoDownloadTask) {
+            super(Color.WHITE);
+            photoDownloadTaskReference =
+                    new WeakReference<PhotoDownloadTask>(photoDownloadTask);
+        }
+
+        public PhotoDownloadTask getPhotoDownloadTask() {
+            return photoDownloadTaskReference.get();
+        }
+    }
+
+    private boolean cancelPotentialDownload(String id, ImageView imageView) {
+        PhotoDownloadTask photoDownloadTask = getPhotoDownloadTask(imageView);
+
+        if (photoDownloadTask != null) {
+            String bitmapId = photoDownloadTask.getPhotoId();
+            // If id does not exist or ids do not match the photoDownloadTask can be cancelled
+            if ((bitmapId == null) || (!bitmapId.equals(id))) {
+                Log.i("PhotoManager","Download cancelled");
+                photoDownloadTask.cancel(true);
+            } else {
+                // A photo with the same id is already being downloaded
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private PhotoDownloadTask getPhotoDownloadTask(ImageView imageView) {
+        if (imageView != null) {
+            Drawable drawable = imageView.getDrawable();
+            if (drawable instanceof DrawableWithTaskReference) {
+                DrawableWithTaskReference downloadedDrawable = (DrawableWithTaskReference)drawable;
+                return downloadedDrawable.getPhotoDownloadTask();
+            }
+        }
+        return null;
     }
 }
