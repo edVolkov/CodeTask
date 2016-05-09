@@ -6,18 +6,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import java.util.ArrayList;
+
 /**
  * Created by eduards.volkovs on 09/05/2016.
  */
 public class LazyAdapter extends BaseAdapter {
     private LayoutInflater inflater;
+    private ArrayList<String> photoIds;
 
-    public LazyAdapter(Context context) {
+    public LazyAdapter(Context context, ArrayList<String> photoIds) {
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        this.photoIds = photoIds;
     }
     @Override
     public int getCount() {
-        return 10;
+        return photoIds.size();
     }
 
     @Override
