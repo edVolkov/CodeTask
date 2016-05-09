@@ -1,5 +1,7 @@
 package eduards.volkovs.codetask;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -11,12 +13,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.ListView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -91,11 +95,27 @@ public class PhotoListFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        showPhotoDetailsFragment();
+        Bundle bundle = getBundleWithBitmap(view);
+        showPhotoDetailsFragment(bundle);
     }
 
-    public void showPhotoDetailsFragment() {
+    public Bundle getBundleWithBitmap(View view) {
+        ImageView imageView = (ImageView) view.findViewById(R.id.photoInList);
+
+        Bitmap bitmap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+        byte[] b = outputStream.toByteArray();
+
+        Bundle bundle = new Bundle();
+        bundle.putByteArray("bitmap",b);
+        return bundle;
+    }
+
+    public void showPhotoDetailsFragment(Bundle bundle) {
         PhotoDetailsFragment photoDetailsFragment = new PhotoDetailsFragment();
+        photoDetailsFragment.setArguments(bundle);
         FragmentManager fragmentManager = getFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         transaction.add(R.id.fragmentContainer,photoDetailsFragment).addToBackStack("addedPhotoDetailsFragment");
