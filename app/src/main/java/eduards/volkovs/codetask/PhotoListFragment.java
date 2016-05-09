@@ -43,11 +43,11 @@ public class PhotoListFragment extends Fragment implements AdapterView.OnItemCli
         super.onActivityCreated(savedInstanceState);
 
         // Download photo ids once the Activity is created
-        FlickrIdDownloadTask idDownloadTask = new FlickrIdDownloadTask();
+        FlickrPhotoIdDownloadTask idDownloadTask = new FlickrPhotoIdDownloadTask();
         idDownloadTask.execute("https://api.flickr.com/services/rest/?&method=flickr.people.getPublicPhotos&api_key=a9eb4b87975f17d54c75eb7f2ed41a4e&user_id=8935325@N08&format=json&nojsoncallback=1';");
     }
 
-    public class FlickrIdDownloadTask extends AsyncTask<String,Void,ArrayList<String>> {
+    public class FlickrPhotoIdDownloadTask extends AsyncTask<String,Void,ArrayList<String>> {
         @Override
         protected ArrayList<String> doInBackground(String... params) {
             ArrayList<String> photoIds = new ArrayList<String>();
