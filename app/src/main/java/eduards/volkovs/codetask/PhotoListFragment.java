@@ -8,7 +8,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -79,7 +78,6 @@ public class PhotoListFragment extends Fragment implements AdapterView.OnItemCli
         @Override
         protected void onPostExecute(ArrayList<String> photoIds) {
             super.onPostExecute(photoIds);
-            Log.i("PhotoListFragment","Downloaded " + photoIds.size() + "ids");
             initializePhotoList(photoIds);
         }
     }

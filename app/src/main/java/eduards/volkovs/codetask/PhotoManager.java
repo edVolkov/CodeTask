@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.util.Log;
 import android.widget.ImageView;
 
 import org.json.JSONArray;
@@ -22,12 +21,24 @@ import java.net.URL;
  * Created by eduards.volkovs on 09/05/2016.
  */
 public class PhotoManager {
-    public void displayPhoto(String id, ImageView imageView) {
-        int stubResourceId = R.drawable.ic_sort;
-        imageView.setImageResource(stubResourceId);
+    private MemoryCache memoryCache;
 
-        FlickrPhotoUrlDownloadTask urlDownloadTask = new FlickrPhotoUrlDownloadTask(imageView);
-        urlDownloadTask.execute("https://api.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=a9eb4b87975f17d54c75eb7f2ed41a4e&photo_id="+ id +"&format=json&nojsoncallback=1",id);
+    public PhotoManager() {
+      memoryCache = new MemoryCache();
+    }
+
+    public void displayPhoto(String id, ImageView imageView) {
+        Bitmap bitmap = memoryCache.get(id);
+
+        if(bitmap != null) {
+            imageView.setImageBitmap(bitmap);
+        } else {
+            int stubResourceId = R.drawable.ic_sort;
+            imageView.setImageResource(stubResourceId);
+
+            FlickrPhotoUrlDownloadTask urlDownloadTask = new FlickrPhotoUrlDownloadTask(imageView);
+            urlDownloadTask.execute("https://api.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=a9eb4b87975f17d54c75eb7f2ed41a4e&photo_id="+ id +"&format=json&nojsoncallback=1",id);
+        }
 
     }
 
@@ -86,7 +97,10 @@ public class PhotoManager {
         }
         @Override
         protected Bitmap doInBackground(String... params) {
-            Bitmap bitmap = getBitmap(params[0]);
+            String url = params[0];
+            String id = params[1];
+            Bitmap bitmap = getBitmap(url);
+            memoryCache.put(id,bitmap);
             return bitmap;
         }
 
@@ -111,6 +125,10 @@ public class PhotoManager {
 
             } catch(Throwable e) {
                 e.printStackTrace();
+
+                if(e instanceof OutOfMemoryError)
+                    memoryCache.clear();
+
                 return null;
             }
         }
@@ -156,7 +174,6 @@ public class PhotoManager {
             String bitmapId = photoDownloadTask.getPhotoId();
             // If id does not exist or ids do not match the photoDownloadTask can be cancelled
             if ((bitmapId == null) || (!bitmapId.equals(id))) {
-                Log.i("PhotoManager","Download cancelled");
                 photoDownloadTask.cancel(true);
             } else {
                 // A photo with the same id is already being downloaded
